@@ -1,0 +1,116 @@
+﻿@model LibraryWeb.Models.OrderConfirmationViewModel
+@{
+    ViewData["Title"] = "Order Confirmation";
+}
+
+<style>
+    .order-confirmation {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+    }
+
+    .success-header {
+        color: #2c7;
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    .order-info {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .claim-code {
+        color: #2c7;
+        font-weight: bold;
+        background-color: #f0fff0;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    .discount-text {
+        color: #2c7;
+    }
+
+    .discount-list {
+        color: #666;
+        margin: 5px 0 5px 25px;
+    }
+
+    .total {
+        font-size: 18px;
+        margin-top: 10px;
+    }
+
+    .divider {
+        border: 0;
+        height: 1px;
+        background-color: #e0e0e0;
+        margin: 15px 0;
+    }
+
+    .instructions {
+        background-color: #f0f7ff;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 3px solid #3498db;
+    }
+
+    .email-note {
+        color: #666;
+        font-size: 14px;
+        margin-top: 10px;
+    }
+</style>
+
+<div class="order-confirmation">
+    <h2 class="success-header">✅ Order Placed Successfully!</h2>
+
+    <div class="order-info">
+        <p><strong>Order ID:</strong> @Model.Id</p>
+        <p><strong>Claim Code:</strong> <span class="claim-code">@Model.ClaimCode</span></p>
+
+        @{
+            var subTotal = Model.SubTotalBeforeDiscount;
+            var discount = Model.DiscountAmount;
+            var total = Model.TotalAmount;
+        }
+
+        @if (Model.HasDiscount)
+        {
+            <p><strong>Subtotal:</strong> $@subTotal.ToString("0.00")</p>
+            <p><strong>Additional Discount:</strong> <span class="discount-text">-$@discount.ToString("0.00")</span></p>
+
+            @if (Model.AppliedDiscount.Any())
+            {
+                <ul class="discount-list">
+                    @foreach (var label in Model.AppliedDiscount)
+                    {
+                        <li>@label</li>
+                    }
+                </ul>
+            }
+
+            <p class="total"><strong>Total Payable:</strong> $@total.ToString("0.00")</p>
+        }
+        else
+        {
+            <p class="total"><strong>Total:</strong> $@total.ToString("0.00")</p>
+        }
+
+        <p><strong>Date:</strong> @Model.OrderDate</p>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="instructions">
+        <p>Please bring your <strong>Membership ID</strong> and <strong>Claim Code</strong> to the store when picking up your order.</p>
+        <p class="email-note"><em>A confirmation email with your claim code and order bill has also been sent to your registered email address.</em></p>
+    </div>
+
+    <hr class="divider" />
+</div>

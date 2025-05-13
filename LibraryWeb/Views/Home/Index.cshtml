@@ -1,0 +1,195 @@
+﻿@{
+    ViewData["Title"] = "Home";
+    var announcement = ViewBag.PinnedAnnouncement;
+}
+
+<!-- Custom CSS -->
+<style>
+    /* Basic styling improvements */
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f9f9f9;
+    }
+
+    .container {
+        max-width: auto;
+    }
+
+    /* Logo styling */
+    .library-logo {
+        display: block;
+        margin: 0 auto 20px;
+        max-height: 100px;
+        width: auto;
+    }
+
+    /* Announcement marquee styling */
+    .announcement-container {
+        
+        background: linear-gradient(to right, #ffe4e9, #ffd6eb, #ffe4e9);
+        border-radius: 8px;
+        border: 1px solid #ffe082;
+        margin-bottom: 20px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .scrolling-text {
+        display: inline-block;
+        white-space: nowrap;
+        animation: marquee 20s linear infinite;
+        padding: 12px 0;
+        font-size: 1.1rem;
+    }
+
+
+    /* Section styling */
+    .welcome-header {
+        background: linear-gradient(135deg, #42a5f5, #1976d2);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .feature-card {
+        background-color: white;
+        border-radius: 8px;
+        padding: 25px 20px;
+        height: 100%;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.12);
+        }
+
+        .feature-card h4 {
+            color: #1976d2;
+            margin-bottom: 15px;
+        }
+
+    .category-card {
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        height: 100%;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        transition: transform 0.3s;
+    }
+
+        .category-card:hover {
+            transform: translateY(-3px);
+            background-color: #f5f9ff;
+        }
+
+        .category-card h5 {
+            color: #1976d2;
+        }
+
+    .btn-primary {
+        background-color: #1976d2;
+        border-color: #1976d2;
+        padding: 12px 30px;
+        font-weight: 600;
+        border-radius: 50px;
+        box-shadow: 0 4px 10px rgba(25, 118, 210, 0.3);
+        transition: all 0.3s;
+    }
+
+        .btn-primary:hover {
+            background-color: #1565c0;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(25, 118, 210, 0.4);
+        }
+
+    hr {
+        border-color: #e0e0e0;
+        margin: 40px 0;
+    }
+</style>
+
+
+<div class="container py-5">
+    <div class="text-center mb-5">
+
+        <!-- Animated marquee for announcement -->
+        @if (announcement != null)
+        {
+            <div class="announcement-container">
+                <div class="scrolling-text">
+                    📢 <strong>@announcement.Title:</strong> @announcement.Message &nbsp;&nbsp;&nbsp;
+                    📢 <strong>@announcement.Title:</strong> @announcement.Message &nbsp;&nbsp;&nbsp;
+                    📢 <strong>@announcement.Title:</strong> @announcement.Message
+                </div>
+            </div>
+        }
+
+        <div class="welcome-header">
+            <h1 class="display-4">Welcome to the Book Library Store BookBazaar</h1>
+            <p class="lead">
+                Explore, bookmark, and order from our private collection of books — now available for online browsing and in-store pickup!
+            </p>
+        </div>
+        <!-- Logo placement within content area -->
+        <img src="~/images/Logo 2.png" alt="Library Logo" class="library-logo" />
+
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="feature-card text-center">
+                <h4>🔍 Browse & Filter</h4>
+                <p>Search by title, author, ISBN, genre, publisher and more. Filter by availability, price, and ratings.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card text-center">
+                <h4>💡 Place & Pick Up Orders</h4>
+                <p>Add books to your cart and place cancelable orders. You'll receive a confirmation email with a claim code for in-store pickup.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card text-center">
+                <h4>👤 Member Benefits</h4>
+                <p>Get a 5% discount when you order 5+ books. After 10 successful orders, enjoy a stackable 10% off your next purchase!</p>
+            </div>
+        </div>
+    </div>
+
+    <hr />
+
+    <div class="row g-4 text-center mb-5">
+        <div class="col-md-3">
+            <div class="category-card">
+                <h5>🔥 Bestsellers</h5>
+                <p>Our most popular picks by members.</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="category-card">
+                <h5>🏆 Award Winners</h5>
+                <p>Critically acclaimed and recognized titles.</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="category-card">
+                <h5>📦 New Arrivals</h5>
+                <p>Freshly added books - updated monthly.</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="category-card">
+                <h5>⏳ Coming Soon</h5>
+                <p>Previews of books arriving in our catalog.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-5">
+        <a href="@Url.Action("BrowseBooks", "Home")" class="btn btn-primary btn-lg px-5">Start Exploring</a>
+    </div>
+</div>

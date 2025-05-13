@@ -1,0 +1,237 @@
+﻿@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@{
+    var token = Context.Session.GetString("JWTToken");
+    string loggedInUserEmail = null;
+    string loggedInUserFullName = null;
+
+    if (!string.IsNullOrEmpty(token))
+    {
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+        loggedInUserEmail = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value
+                         ?? jwtToken.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
+
+        loggedInUserFullName = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value
+        ?? jwtToken.Claims.FirstOrDefault(c => c.Type == "fullName")?.Value;
+    }
+
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - BookBazaarWeb</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/LibraryWeb.styles.css" asp-append-version="true" />
+    <style>
+        .navbar-brand.logo {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+
+            .navbar-brand.logo img {
+                height: 50px;
+                margin-right: 10px;
+            }
+
+        /* Increased spacing for header */
+        header nav.navbar {
+            padding-top: 7px;
+            padding-bottom: 7px;
+            padding-left: 30px;
+            padding-right: 30px;
+        }
+
+        .container-fluid {
+            padding-left: 30px;
+            padding-right: 30px;
+        }
+
+        /* Footer styling with logo */
+        footer {
+            padding: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+            footer img {
+                height: 30px;
+            }
+
+        /* Improved login/register buttons */
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-login {
+            background-color: #fff;
+            color: #0d6efd;
+            border: 1px solid #0d6efd;
+            border-radius: 20px;
+            padding: 5px 20px;
+            transition: all 0.3s ease;
+        }
+
+            .btn-login:hover {
+                background-color: #f0f7ff;
+                color: #0a58ca;
+            }
+
+        .btn-register {
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 5px 20px;
+            transition: all 0.3s ease;
+        }
+
+            .btn-register:hover {
+                background-color: #0a58ca;
+            }
+
+        .btn-logout {
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+
+            .btn-logout:hover {
+                color: #dc3545;
+            }
+
+        /* Navigation link hover and active styles */
+        .nav-link-custom {
+            position: relative;
+            padding: 8px 0;
+            margin: 0 15px;
+            color: #212529;
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+            .nav-link-custom:hover {
+                color: #0d6efd;
+            }
+
+            .nav-link-custom::after {
+                content: '';
+                position: absolute;
+                width: 0;
+                height: 2px;
+                bottom: 0;
+                left: 0;
+                background-color: #0d6efd;
+                transition: width 0.3s;
+            }
+
+            .nav-link-custom:hover::after {
+                width: 100%;
+            }
+
+            .nav-link-custom.active {
+                color: #0d6efd;
+                font-weight: 600;
+            }
+
+                .nav-link-custom.active::after {
+                    width: 100%;
+                }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand logo me-4" asp-area="" asp-controller="Home" asp-action="Index">
+                    <img src="~/images/Logo 2.png" alt="Library Logo" class="me-3" />
+                </a>
+                <a class="nav-link-custom @(currentController == "Home" && currentAction == "Index" ? "active" : "")"
+                   asp-area="" asp-controller="Home" asp-action="Index">🏠 Home</a>
+                <a class="nav-link-custom @(currentController == "Home" && currentAction == "BrowseBooks" ? "active" : "")"
+                   href="@Url.Action("BrowseBooks", "Home")">📚 Books</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        @*   <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li> *@
+                    </ul>
+
+                    <!-- Login, Logout and Bookmark buttons -->
+                    <ul class="navbar-nav">
+                        @if (!string.IsNullOrEmpty(token) || User.Identity.IsAuthenticated)
+                        {
+                            @* admin panel *@
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a class="nav-link-custom @(currentController == "AdminBooks" ? "active" : "")"
+                                   asp-controller="AdminBooks" asp-action="Index">🛠 Admin Portal</a>
+                            }
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    👤 @loggedInUserFullName
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                    <li><a class="dropdown-item" asp-controller="Bookmarks" asp-action="Index">🔖 My Bookmarks</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Cart" asp-action="Index">🛒 My Cart</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Orders" asp-action="Index">📦 My Orders</a></li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-item">
+                                <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-link nav-link btn-logout">Logout</button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <div class="auth-buttons">
+                                <a class="btn btn-login" asp-area="" asp-controller="Account" asp-action="Login">Login</a>
+                                <a class="btn btn-register" asp-area="" asp-controller="Account" asp-action="Register">Register</a>
+                            </div>
+                        }
+                    </ul>
+
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container text-center">
+            <a asp-area="" asp-controller="Home" asp-action="Index">
+                <img src="~/images/Logo 2.png" alt="Library Logo" />
+            </a> <br />
+            <span>&copy; 2025 BookBazaar. All rights reserved. Privacy Policy</span>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

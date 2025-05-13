@@ -1,0 +1,874 @@
+﻿@model LibraryWeb.Models.BooksViewModel
+
+@{
+    ViewData["Title"] = "All Books";
+    string[] categories = { "all", "bestsellers", "awardwinners", "newreleases", "newarrivals", "comingsoon", "deals" };
+}
+
+@if (TempData["NotificationMessage"] != null)
+{
+    <div class="alert alert-info fade-out" id="notificationMessage">
+        @TempData["NotificationMessage"]
+    </div>
+    <script>
+        setTimeout(() => {
+            const msg = document.getElementById('notificationMessage');
+            if (msg) {
+                msg.style.transition = 'opacity 0.5s ease-out';
+                msg.style.opacity = '0';
+                setTimeout(() => msg.remove(), 500);
+            }
+        }, 3000);
+    </script>
+}
+
+<div class="container">
+    <div class="search-filter-container">
+        <form method="post" asp-action="Index" class="filter-form">
+            <div class="search-section">
+                <div class="form-section-title">
+                    <i class="bi bi-search"></i> Search Books
+                </div>
+                <div class="search-row">
+                    <input type="text" name="searchQuery" class="form-control search-input" placeholder="Title, ISBN, or description" />
+                    <div class="price-range">
+                        <input type="number" name="filterPriceMin" class="form-control" placeholder="Min Price" />
+                        <input type="number" name="filterPriceMax" class="form-control" placeholder="Max Price" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <div class="form-section-title">
+                    <i class="bi bi-funnel"></i> Apply Filters
+                </div>
+                <div class="filter-row">
+                    <select name="filterAuthor" class="form-select">
+                        <option value="">All Authors</option>
+                        @foreach (var author in Model.Books.Select(b => b.Author).Distinct())
+                        {
+                            <option value="@author">@author</option>
+                        }
+                    </select>
+
+                    <select name="filterGenre" class="form-select">
+                        <option value="">All Genres</option>
+                        @foreach (var genre in Model.Books.Select(b => b.Genre).Distinct())
+                        {
+                            <option value="@genre">@genre</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <select name="filterAvailability" class="form-select">
+                        <option value="">All Availability</option>
+                        <option value="1">Available</option>
+                        <option value="0">Out of Stock</option>
+                        <option value="2">Library-Only</option>
+                    </select>
+
+                    <select name="sortOrder" class="form-select">
+                        <option value="title">Sort by Title</option>
+                        <option value="publicationDate">Sort by Publication Date</option>
+                        <option value="price">Sort by Price</option>
+                        <option value="popularity">Sort by Popularity</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-submit">
+                <button type="submit" class="btn btn-primary filter-btn">
+                    <i class="bi bi-sliders"></i> Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="category-tabs mb-4">
+        @foreach (var cat in categories)
+        {
+            var label = cat
+            .Replace("awardwinners", "🏆 Award Winners")
+            .Replace("newreleases", "🆕 New Releases")
+            .Replace("newarrivals", "📦 New Arrivals")
+            .Replace("comingsoon", "⏳ Coming Soon")
+            .Replace("bestsellers", "📈 Best Sellers")
+            .Replace("deals", "💸 Deals")
+            .Replace("all", "All");
+
+            <form method="post" asp-action="Index" class="d-inline">
+                <input type="hidden" name="category" value="@cat" />
+                <input type="hidden" name="searchQuery" value="@Model.SearchQuery" />
+                <input type="hidden" name="filterAuthor" value="@Model.FilterAuthor" />
+                <input type="hidden" name="filterGenre" value="@Model.FilterGenre" />
+                <input type="hidden" name="filterPriceMin" value="@Model.FilterPriceMin" />
+                <input type="hidden" name="filterPriceMax" value="@Model.FilterPriceMax" />
+                <input type="hidden" name="sortOrder" value="@Model.SortOrder" />
+                <input type="hidden" name="filterAvailability" value="@Model.FilterAvailability" />
+                <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                <button type="submit" class="category-btn @(Model.Category?.Equals(cat, StringComparison.OrdinalIgnoreCase) == true ? "active" : "")">
+                    @label
+                </button>
+            </form>
+        }
+    </div>
+
+    <div class="table-responsive">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            @foreach (var book in Model.Books)
+            {
+                <div class="col">
+                    <div class="book-card">
+                        <div class="book-header">
+                            <h5 class="book-title">@book.Title</h5>
+                            <p class="book-author">by @book.Author</p>
+                        </div>
+                        <div class="book-body">
+                            <div class="book-info">
+                                <div class="book-genre"><span>Genre:</span> @book.Genre</div>
+
+                                <div class="book-price-container">
+                                    @if (book.Discount > 0)
+                                    {
+                                        <div class="book-price original">$@book.Price</div>
+                                        <div class="book-discount">@(book.Discount * 100)% OFF</div>
+                                        <div class="book-price discounted">$@(Math.Round(book.Price * (1 - book.Discount), 2))</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="book-price">$@book.Price</div>
+                                    }
+                                </div>
+
+                                <div class="book-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label">Rating</span>
+                                        <span class="stat-value">@book.Rating ⭐</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">Status</span>
+                                        @{
+                                            var availabilityClass = book.InStock switch
+                                            {
+                                                0 => "unavailable",
+                                                1 => "available",
+                                                2 => "library-only",
+                                                _ => ""
+                                            };
+
+                                            var availability = book.InStock switch
+                                            {
+                                                0 => "Out of Stock",
+                                                1 => "In Stock",
+                                                2 => "Library-Only",
+                                                _ => "Unknown"
+                                            };
+                                        }
+                                        <span class="stat-value @availabilityClass">@availability</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button class="view-details-btn" type="button" data-bs-toggle="modal" data-bs-target="#bookModal-@book.Id">
+                                <i class="bi bi-info-circle"></i> View Details
+                            </button>
+
+                            <div class="book-actions">
+                                @if (User.Identity.IsAuthenticated)
+                                {
+                                    <form method="post" asp-controller="Books" asp-action="Bookmark">
+                                        <input type="hidden" name="bookId" value="@book.Id" />
+                                        <button type="submit" class="bookmark-btn">
+                                            <i class="bi bi-bookmark"></i> Bookmark
+                                        </button>
+                                    </form>
+
+                                    @if (book.InStock == 1)
+                                    {
+                                        <form method="post" asp-controller="Cart" asp-action="AddToCart">
+                                            <input type="hidden" name="bookId" value="@book.Id" />
+                                            <button type="submit" class="cart-btn">
+                                                <i class="bi bi-cart-plus"></i> Add to Cart
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <button class="cart-btn disabled" disabled>
+                                            <i class="bi bi-x-circle"></i> Not for Sale
+                                        </button>
+                                    }
+                                }
+                                else
+                                {
+                                    <a href="/Account/Login" class="login-btn">
+                                        <i class="bi bi-lock"></i> Login to Buy
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal for book details - Kept as original -->
+                <!-- Modal for book details - Improved but simple -->
+                <div class="modal fade" id="bookModal-@book.Id" tabindex="-1" aria-labelledby="bookModalLabel-@book.Id" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="bookModalLabel-@book.Id">
+                                    @book.Title <span class="author-subtitle">by @book.Author</span>
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="book-details">
+                                    <div class="book-detail-section">
+                                        <h6 class="detail-section-title">
+                                            <i class="bi bi-book"></i> Book Information
+                                        </h6>
+                                        <div class="detail-content">
+                                            <div class="detail-row">
+                                                <p><strong>Author:</strong> @book.Author</p>
+                                                <p><strong>Genre:</strong> @book.Genre</p>
+                                            </div>
+                                            <div class="detail-row">
+                                                <p><strong>Language:</strong> @book.Language</p>
+                                                <p><strong>Format:</strong> @book.Format</p>
+                                            </div>
+                                            <div class="detail-row">
+                                                <p><strong>ISBN:</strong> @book.ISBN</p>
+                                                <p><strong>Publication Date:</strong> @book.PublicationDate.ToString("MMMM d, yyyy")</p>
+                                            </div>
+                                            <div class="detail-row">
+                                                <p><strong>Listed Since:</strong> @book.ListedDate.ToString("MMMM d, yyyy")</p>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="book-detail-section">
+                                        <h6 class="detail-section-title">
+                                            <i class="bi bi-file-text"></i> Description
+                                        </h6>
+                                        <div class="detail-content">
+                                            <p class="book-description">@book.Description</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="book-detail-section">
+                                        <h6 class="detail-section-title">
+                                            <i class="bi bi-star"></i> Status & Ratings
+                                        </h6>
+                                        <div class="detail-content">
+                                            <p><strong>Rating:</strong> @book.Rating ⭐</p>
+                                            <div class="badges-container">
+                                                @if (book.IsBestseller)
+                                                {
+                                                    <span class="badge bg-success me-1">Bestseller</span>
+                                                }
+                                                @if (book.HasAwards)
+                                                {
+                                                    <span class="badge bg-warning text-dark me-1">Award Winner</span>
+                                                }
+                                                @if (DateTime.Now.Subtract(book.PublicationDate).TotalDays < 30)
+                                                {
+                                                    <span class="badge bg-info text-dark me-1">New Release</span>
+                                                }
+                                                @if (DateTime.Now.Subtract(book.ListedDate).TotalDays < 14)
+                                                {
+                                                    <span class="badge bg-primary me-1">New Arrival</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="book-detail-section">
+                                        <h6 class="detail-section-title">
+                                            <i class="bi bi-tag"></i> Pricing & Availability
+                                        </h6>
+                                        <div class="detail-content">
+                                            <div class="price-display">
+                                                @if (book.Discount > 0)
+                                                {
+                                                    <p>
+                                                        <strong>Price:</strong>
+                                                        <span class="original-price">$@book.Price</span>
+                                                        <span class="discount-badge">@(book.Discount * 100)% OFF</span>
+                                                        <span class="sale-price">$@(Math.Round(book.Price * (1 - book.Discount), 2))</span>
+                                                    </p>
+                                                }
+                                                else
+                                                {
+                                                    <p><strong>Price:</strong> <span class="current-price">$@book.Price</span></p>
+                                                }
+                                            </div>
+                                            <p>
+                                                <strong>Availability:</strong>
+                                                @{
+                                                    var modalAvailabilityClass = book.InStock switch
+                                                    {
+                                                        0 => "text-danger",
+                                                        1 => "text-success",
+                                                        2 => "text-primary",
+                                                        _ => ""
+                                                    };
+
+                                                    var availabilityIcon = book.InStock switch
+                                                    {
+                                                        0 => "bi-x-circle",
+                                                        1 => "bi-check-circle",
+                                                        2 => "bi-building",
+                                                        _ => "bi-question-circle"
+                                                    };
+
+                                                    var modalAvailabilityText = book.InStock switch
+                                                    {
+                                                        0 => "Out of Stock",
+                                                        1 => "In Stock",
+                                                        2 => "Library-Only",
+                                                        _ => "Unknown"
+                                                    };
+                                                }
+                                                <span class="@modalAvailabilityClass">
+                                                    <i class="bi @availabilityIcon"></i> @modalAvailabilityText
+                                                </span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="bi bi-x"></i> Close
+                                </button>
+                                @if (User.Identity.IsAuthenticated && book.InStock == 1)
+                                {
+                                    <form method="post" asp-controller="Cart" asp-action="AddToCart" class="d-inline">
+                                        <input type="hidden" name="bookId" value="@book.Id" />
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="bi bi-cart-plus"></i> Add to Cart
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            @for (int i = 1; i <= (int)ViewBag.TotalPages; i++)
+            {
+                <li class="page-item @(i == (int)ViewBag.CurrentPage ? "active" : "")">
+                    <form method="post" asp-controller="Books" asp-action="Index">
+                        <input type="hidden" name="searchQuery" value="@Model.SearchQuery" />
+                        <input type="hidden" name="filterAuthor" value="@Model.FilterAuthor" />
+                        <input type="hidden" name="filterGenre" value="@Model.FilterGenre" />
+                        <input type="hidden" name="filterPriceMin" value="@Model.FilterPriceMin" />
+                        <input type="hidden" name="filterPriceMax" value="@Model.FilterPriceMax" />
+                        <input type="hidden" name="sortOrder" value="@Model.SortOrder" />
+                        <input type="hidden" name="filterAvailability" value="@Model.FilterAvailability" />
+                        <input type="hidden" name="pageSize" value="@Model.PageSize" />
+                        <input type="hidden" name="category" value="@Model.Category" />
+                        <button type="submit" name="page" value="@i" class="page-link">@i</button>
+                    </form>
+                </li>
+            }
+        </ul>
+    </nav>
+</div>
+
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f9f9f9;
+    }
+
+    .container {
+        max-width: auto;
+    }
+    /* Search and Filter Section */
+    .search-filter-container {
+        background-color: #a8aaac;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .form-section-title {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 12px;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .search-section, .filter-section {
+        margin-bottom: 15px;
+    }
+
+    .search-row, .filter-row {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .search-input {
+        flex: 2;
+    }
+
+    .price-range {
+        display: flex;
+        gap: 10px;
+        flex: 1;
+    }
+
+    .filter-submit {
+        text-align: center;
+        margin-top: 15px;
+    }
+
+    .filter-btn {
+        padding: 8px 20px;
+        font-weight: 500;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+    }
+
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+    /* Category Tabs */
+    .category-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        margin: 20px 0;
+    }
+
+    .category-btn {
+        padding: 8px 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 20px;
+        color: #495057;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+        .category-btn:hover {
+            background-color: #e9ecef;
+            border-color: #ced4da;
+        }
+
+        .category-btn.active {
+            background-color: #4361ee;
+            color: white;
+            border-color: #4361ee;
+        }
+
+    /* Book Cards */
+    .book-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        border-radius: 10px;
+        border: 2px solid #dee2e6;
+        overflow: hidden;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        background-color: white;
+    }
+
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+
+    .book-header {
+        padding: 15px;
+        background-color: #97c3fc;
+        border-bottom: 1px solid #eaedf2;
+    }
+
+    .book-title {
+        margin: 0;
+        font-size: 18px;
+        color: #2d3748;
+        line-height: 1.3;
+    }
+
+    .book-author {
+        margin: 6px 0 0;
+        font-size: 14px;
+        color: #2d3748;
+        font-style: italic;
+    }
+
+    .book-body {
+        display: flex;
+        flex-direction: column;
+        padding: 15px;
+        flex-grow: 1;
+    }
+
+    .book-info {
+        flex-grow: 1;
+    }
+
+    .book-genre {
+        margin-bottom: 12px;
+        font-size: 14px;
+    }
+
+        .book-genre span {
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+    .book-price-container {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    .book-price {
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+        .book-price.original {
+            text-decoration: line-through;
+            color: #a0aec0;
+            font-weight: normal;
+        }
+
+        .book-price.discounted {
+            color: #e53e3e;
+            font-size: 16px;
+        }
+
+    .book-discount {
+        background-color: #fed7d7;
+        color: #e53e3e;
+        font-size: 12px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+
+    .book-stats {
+        display: flex;
+        justify-content: space-between;
+        margin: 12px 0;
+    }
+
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #718096;
+    }
+
+    .stat-value {
+        font-weight: 600;
+        color: #2d3748;
+        font-size: 14px;
+    }
+
+        .stat-value.available {
+            color: #38a169;
+        }
+
+        .stat-value.unavailable {
+            color: #e53e3e;
+        }
+
+        .stat-value.library-only {
+            color: #3182ce;
+        }
+
+    .view-details-btn {
+        text-align: center;
+        color: #4299e1;
+        background: none;
+        border: none;
+        padding: 8px 0;
+        margin: 10px 0;
+        font-size: 14px;
+        cursor: pointer;
+        transition: color 0.2s ease;
+    }
+
+        .view-details-btn:hover {
+            color: #3182ce;
+            text-decoration: underline;
+        }
+
+    .book-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: auto;
+    }
+
+    .bookmark-btn, .cart-btn, .login-btn {
+        padding: 8px;
+        border: none;
+        border-radius: 5px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+    }
+
+    .bookmark-btn {
+        background-color: #edf2f7;
+        color: #4a5568;
+    }
+
+        .bookmark-btn:hover {
+            background-color: #e2e8f0;
+        }
+
+    .cart-btn {
+        background-color: #c6f6d5;
+        color: #276749;
+    }
+
+        .cart-btn:hover {
+            background-color: #9ae6b4;
+        }
+
+        .cart-btn.disabled {
+            background-color: #fed7d7;
+            color: #c53030;
+            cursor: not-allowed;
+        }
+
+    .login-btn {
+        grid-column: span 2;
+        background-color: #bee3f8;
+        color: #2b6cb0;
+        text-align: center;
+        text-decoration: none;
+    }
+
+        .login-btn:hover {
+            background-color: #90cdf4;
+        }
+
+    /* Keep existing modal styling */
+    .book-details {
+        padding: 10px 0;
+    }
+
+    .book-detail-section {
+        margin-bottom: 18px;
+    }
+
+    .detail-section-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #495057;
+        border-bottom: 1px dashed #dee2e6;
+        padding-bottom: 5px;
+    }
+
+    .book-detail-section p {
+        margin-bottom: 5px;
+    }
+
+    .book-description {
+        text-align: justify;
+        line-height: 1.5;
+    }
+
+    .badges-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    /* Improve modal styling */
+    
+    /* Simple improved modal styling */
+    .modal-content {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .modal-header {
+        background-color: #f0f4f8;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 15px 20px;
+    }
+
+    .modal-title {
+        color: #2d3748;
+        font-weight: 600;
+    }
+
+    .author-subtitle {
+        font-size: 16px;
+        font-weight: normal;
+        color: #718096;
+        font-style: italic;
+        margin-left: 8px;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .book-details {
+        padding: 0;
+    }
+
+    .book-detail-section {
+        margin-bottom: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .detail-section-title {
+        font-weight: 600;
+        margin: 0;
+        color: #4a5568;
+        background-color: #f7fafc;
+        padding: 10px 15px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .detail-section-title i {
+            color: #4299e1;
+        }
+
+    .detail-content {
+        padding: 15px;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+    }
+
+        .detail-row p {
+            margin: 0;
+            flex: 1;
+            min-width: 200px;
+        }
+
+
+    .book-detail-section p {
+        margin-bottom: 8px;
+    }
+
+        .book-detail-section p:last-child {
+            margin-bottom: 0;
+        }
+
+    .book-description {
+        line-height: 1.6;
+        color: #4a5568;
+    }
+
+    .badges-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-top: 8px;
+    }
+
+    .badge {
+        font-size: 12px;
+        font-weight: 500;
+        padding: 5px 10px;
+        border-radius: 20px;
+    }
+
+    .price-display {
+        margin-bottom: 12px;
+    }
+
+    .original-price {
+        text-decoration: line-through;
+        color: #a0aec0;
+        margin-right: 8px;
+    }
+
+    .discount-badge {
+        background-color: #fed7d7;
+        color: #e53e3e;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-right: 8px;
+    }
+
+    .sale-price {
+        color: #e53e3e;
+        font-weight: 600;
+    }
+
+    .current-price {
+        font-weight: 600;
+    }
+
+    .modal-footer {
+        background-color: #f7fafc;
+        border-top: 1px solid #e2e8f0;
+        padding: 12px 20px;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+        padding: 8px 16px;
+        border-radius: 5px;
+        transition: all 0.2s;
+    }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <!-- Add Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+}
