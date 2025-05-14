@@ -13,6 +13,7 @@ It enables secure member logins, catalog filtering, cart and order management, b
 | UI Styling  | CSS/Bootstrap 5                         |
 
 ---
+
 ## Prerequisites
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
