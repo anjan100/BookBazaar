@@ -17,7 +17,7 @@ It enables secure member logins, catalog filtering, cart and order management, b
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - Visual Studio 2022+ with ASP.NET and EF Core workloads
-- SQL Server (Express or LocalDB)
+- SQL Server (Express or LocalDB) (https://www.microsoft.com/en-us/download/details.aspx?id=104781&lc=1033&msockid=1f0a1150d663617c38b702cdd73960ec)
 - EF Core CLI tools:
   ```bash
   dotnet tool install --global dotnet-ef
