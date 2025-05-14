@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "LibraryAPI\\BookBazaarAPI.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "LibraryWeb\\BookBazaarWeb.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
