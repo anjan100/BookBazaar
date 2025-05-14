@@ -6,7 +6,7 @@ It enables secure member logins, catalog filtering, cart and order management, b
 
 | Layer       | Tech                                    |
 |-------------|-----------------------------------------|
-| API         | ASP.NET Core 8 Web API                  |
+|Back End       | ASP.NET Core 8 Web API                |
 | Front End   | Razor Pages MVC Web App                 |
 | Database    | Entity Framework Core with SQL Server   |
 | Auth        | JWT (Admin/Member Roles)                |
